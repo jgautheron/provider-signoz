@@ -12,7 +12,7 @@ TERRAFORM_VERSION_VALID := $(shell [ "$(TERRAFORM_VERSION)" = "`printf "$(TERRAF
 
 export TERRAFORM_PROVIDER_SOURCE ?= jgautheron/signoz
 export TERRAFORM_PROVIDER_REPO ?= https://github.com/jgautheron/terraform-provider-signoz
-export TERRAFORM_PROVIDER_VERSION ?= 0.1.1
+export TERRAFORM_PROVIDER_VERSION ?= 0.1.2
 export TERRAFORM_PROVIDER_DOWNLOAD_NAME ?= terraform-provider-signoz
 export TERRAFORM_PROVIDER_DOWNLOAD_URL_PREFIX ?= https://github.com/jgautheron/terraform-provider-signoz/releases/download/v$(TERRAFORM_PROVIDER_VERSION)
 export TERRAFORM_NATIVE_PROVIDER_BINARY ?= terraform-provider-signoz_v$(TERRAFORM_PROVIDER_VERSION)
