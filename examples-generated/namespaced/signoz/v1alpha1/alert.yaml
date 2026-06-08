@@ -1,0 +1,50 @@
+apiVersion: signoz.signoz.m.crossplane.io/v1alpha1
+kind: Alert
+metadata:
+  annotations:
+    meta.upbound.io/example-id: signoz/v1alpha1/alert
+  labels:
+    testing.upbound.io/example-name: high_error_logs
+  name: high-error-logs
+  namespace: crossplane-system
+spec:
+  forProvider:
+    alert: High error log volume
+    alertType: LOGS_BASED_ALERT
+    condition: |-
+      ${jsonencode({
+          compositeQuery = {
+            queryType = "builder"
+            panelType = "graph"
+            queries = [{
+              type = "builder_query"
+              spec = {
+                name         = "A"
+                signal       = "logs"
+                stepInterval = 0
+                aggregations = [{ expression = "count()" }]
+                filter       = { expression = "severity_text = 'ERROR'" }
+                having       = { expression = "" }
+              }
+            }]
+          }
+          selectedQueryName = "A"
+          thresholds = {
+            kind = "basic"
+            spec = [{
+              name      = "warning"
+              target    = 100
+              matchType = "1"
+              op        = "1"
+              channels  = [signoz_notification_channel.slack.name]
+            }]
+          }
+        })}
+    evaluation: |-
+      ${jsonencode({
+          kind = "rolling"
+          spec = { evalWindow = "5m0s", frequency = "1m0s" }
+        })}
+    preferredChannels:
+    - ${signoz_notification_channel.slack.name}
+    severity: warning

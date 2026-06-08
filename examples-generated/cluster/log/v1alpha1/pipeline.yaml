@@ -1,0 +1,24 @@
+apiVersion: log.signoz.crossplane.io/v1alpha1
+kind: Pipeline
+metadata:
+  annotations:
+    meta.upbound.io/example-id: log/v1alpha1/pipeline
+  labels:
+    testing.upbound.io/example-name: main
+  name: main
+spec:
+  forProvider:
+    pipelines: |-
+      ${jsonencode([
+          {
+            orderId = 1
+            name    = "drop-health-checks"
+            alias   = "drop-health-checks"
+            enabled = true
+            filter = {
+              op    = "AND"
+              items = [{ key = { key = "http.target" }, op = "=", value = "/healthz" }]
+            }
+            config = []
+          }
+        ])}

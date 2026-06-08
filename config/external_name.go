@@ -5,19 +5,15 @@ import (
 )
 
 // ExternalNameConfigs contains all external name configurations for this
-// provider.
+// provider. Every SigNoz resource's identifier is assigned by the server (a
+// UUID for dashboards/alerts/channels/views; a fixed id for the singleton log
+// pipeline set), so they all use IdentifierFromProvider.
 var ExternalNameConfigs = map[string]config.ExternalName{
-	// Import requires using a randomly generated ID from provider: nl-2e21sda
-	"null_resource": idWithStub(),
-}
-
-func idWithStub() config.ExternalName {
-	e := config.IdentifierFromProvider
-	e.GetExternalNameFn = func(tfstate map[string]any) (string, error) {
-		en, _ := config.IDAsExternalName(tfstate)
-		return en, nil
-	}
-	return e
+	"signoz_dashboard":            config.IdentifierFromProvider,
+	"signoz_alert":                config.IdentifierFromProvider,
+	"signoz_notification_channel": config.IdentifierFromProvider,
+	"signoz_saved_view":           config.IdentifierFromProvider,
+	"signoz_log_pipeline":         config.IdentifierFromProvider,
 }
 
 // ExternalNameConfigurations applies all external name configs listed in the

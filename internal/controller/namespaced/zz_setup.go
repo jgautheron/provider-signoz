@@ -9,16 +9,24 @@ import (
 
 	"github.com/crossplane/upjet/v2/pkg/controller"
 
-	resource "github.com/crossplane/upjet-provider-template/internal/controller/namespaced/null/resource"
-	providerconfig "github.com/crossplane/upjet-provider-template/internal/controller/namespaced/providerconfig"
+	pipeline "github.com/jgautheron/provider-signoz/internal/controller/namespaced/log/pipeline"
+	channel "github.com/jgautheron/provider-signoz/internal/controller/namespaced/notification/channel"
+	providerconfig "github.com/jgautheron/provider-signoz/internal/controller/namespaced/providerconfig"
+	view "github.com/jgautheron/provider-signoz/internal/controller/namespaced/saved/view"
+	alert "github.com/jgautheron/provider-signoz/internal/controller/namespaced/signoz/alert"
+	dashboard "github.com/jgautheron/provider-signoz/internal/controller/namespaced/signoz/dashboard"
 )
 
 // Setup creates all controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		resource.Setup,
+		pipeline.Setup,
+		channel.Setup,
 		providerconfig.Setup,
+		view.Setup,
+		alert.Setup,
+		dashboard.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -31,8 +39,12 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 // the supplied manager gated.
 func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		resource.SetupGated,
+		pipeline.SetupGated,
+		channel.SetupGated,
 		providerconfig.SetupGated,
+		view.SetupGated,
+		alert.SetupGated,
+		dashboard.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

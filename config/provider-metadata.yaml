@@ -1,40 +1,107 @@
-name: hashicorp/null
+name: jgautheron/signoz
 resources:
-    null_resource:
+    signoz_alert:
         subCategory: ""
-        description: The null_resource resource implements the standard resource lifecycle but takes no further action. On Terraform 1.4 and later, use the terraform_data resource type https://developer.hashicorp.com/terraform/language/resources/terraform-data instead. Terraform 1.9 and later support the moved configuration block from null_resource to terraform_data. The triggers argument allows specifying an arbitrary set of values that, when changed, will cause the resource to be replaced.
-        name: null_resource
-        title: null_resource Resource - terraform-provider-null
+        description: A SigNoz alert rule. Top-level fields are typed; the query condition, evaluation, and notification_settings are JSON blobs (export from the SigNoz UI to adapt). Defaults target the v5 / v2alpha1 schema required by SigNoz >= 0.125.
+        name: signoz_alert
+        title: signoz_alert Resource - signoz
         examples:
-            - name: cluster
+            - name: high_error_logs
               manifest: |-
                 {
-                  "connection": [
-                    {
-                      "host": "${element(aws_instance.cluster[*].public_ip, 0)}"
-                    }
+                  "alert": "High error log volume",
+                  "alert_type": "LOGS_BASED_ALERT",
+                  "condition": "${jsonencode({\n    compositeQuery = {\n      queryType = \"builder\"\n      panelType = \"graph\"\n      queries = [{\n        type = \"builder_query\"\n        spec = {\n          name         = \"A\"\n          signal       = \"logs\"\n          stepInterval = 0\n          aggregations = [{ expression = \"count()\" }]\n          filter       = { expression = \"severity_text = 'ERROR'\" }\n          having       = { expression = \"\" }\n        }\n      }]\n    }\n    selectedQueryName = \"A\"\n    thresholds = {\n      kind = \"basic\"\n      spec = [{\n        name      = \"warning\"\n        target    = 100\n        matchType = \"1\"\n        op        = \"1\"\n        channels  = [signoz_notification_channel.slack.name]\n      }]\n    }\n  })}",
+                  "evaluation": "${jsonencode({\n    kind = \"rolling\"\n    spec = { evalWindow = \"5m0s\", frequency = \"1m0s\" }\n  })}",
+                  "preferred_channels": [
+                    "${signoz_notification_channel.slack.name}"
                   ],
-                  "provisioner": {
-                    "remote-exec": [
-                      {
-                        "inline": [
-                          "bootstrap-cluster.sh ${join(\" \",\n      aws_instance.cluster[*].private_ip)}"
-                        ]
-                      }
-                    ]
-                  },
-                  "triggers": {
-                    "cluster_instance_ids": "${join(\",\", aws_instance.cluster[*].id)}"
-                  }
+                  "severity": "warning"
                 }
-              dependencies:
-                aws_instance.cluster: |-
-                    {
-                      "ami": "ami-0dcc1e21636832c5d",
-                      "count": 3,
-                      "instance_type": "m5.large"
-                    }
+              references:
+                preferred_channels: signoz_notification_channel.slack.name
         argumentDocs:
-            id: (String) This is set to a random value at create time.
-            triggers: (Map of String) A map of arbitrary strings that, when changed, will force the null resource to be replaced, re-running any associated provisioners.
+            alert: (String) Alert name.
+            alert_type: (String) One of METRIC_BASED_ALERT, LOGS_BASED_ALERT, TRACES_BASED_ALERT, EXCEPTIONS_BASED_ALERT.
+            condition: (String) Query condition as JSON (compositeQuery + thresholds). Compared semantically.
+            description: (String) Human-readable description.
+            disabled: (Boolean) Whether the rule is disabled. Defaults to false.
+            eval_window: (String) Evaluation window (e.g. 5m0s).
+            evaluation: (String) Evaluation block as JSON (v2alpha1+). Compared semantically.
+            frequency: (String) Evaluation frequency (e.g. 1m0s).
+            id: (String) Server-assigned alert rule id.
+            labels: (Map of String) Custom labels attached to the alert.
+            notification_settings: (String) Notification settings as JSON (renotify, group_by, use_policy). Compared semantically.
+            preferred_channels: (List of String) Notification channel names the alert routes to.
+            rule_type: '(String) Rule engine type: threshold_rule (default) or promql_rule.'
+            schema_version: (String) Alert schema version. Defaults to v2alpha1.
+            severity: (String) Severity label (e.g. info, warning, critical).
+            source: (String) Source URL recorded on the rule.
+            version: (String) Alert API version. Defaults to v5 (required by SigNoz >= 0.125).
+        importStatements: []
+    signoz_dashboard:
+        subCategory: ""
+        description: A SigNoz dashboard. The full dashboard definition is supplied as JSON in data; export an existing dashboard from the SigNoz UI to bootstrap it.
+        name: signoz_dashboard
+        title: signoz_dashboard Resource - signoz
+        examples:
+            - name: overview
+              manifest: |-
+                {
+                  "data": "${jsonencode({\n    title       = \"App Overview\"\n    description = \"Managed by Terraform\"\n    tags        = [\"managed-by:terraform\"]\n    layout      = []\n    widgets     = []\n  })}"
+                }
+        argumentDocs:
+            data: (String) Dashboard definition as JSON (title, layout, widgets, variables, …). Compared semantically, so key ordering and whitespace don't cause diffs.
+            id: (String) Server-assigned dashboard UUID.
+        importStatements: []
+    signoz_log_pipeline:
+        subCategory: ""
+        description: The SigNoz log-processing pipeline set. SigNoz manages log pipelines as a single versioned, ordered collection, so this is a singleton resource — declare at most one. Applying publishes a new pipeline-set version; destroying publishes an empty set.
+        name: signoz_log_pipeline
+        title: signoz_log_pipeline Resource - signoz
+        examples:
+            - name: main
+              manifest: |-
+                {
+                  "pipelines": "${jsonencode([\n    {\n      orderId = 1\n      name    = \"drop-health-checks\"\n      alias   = \"drop-health-checks\"\n      enabled = true\n      filter = {\n        op    = \"AND\"\n        items = [{ key = { key = \"http.target\" }, op = \"=\", value = \"/healthz\" }]\n      }\n      config = []\n    }\n  ])}"
+                }
+        argumentDocs:
+            id: (String) Constant singleton id (signoz-log-pipelines).
+            pipelines: (String) Ordered array of pipeline definitions as JSON. Compared semantically.
+        importStatements: []
+    signoz_notification_channel:
+        subCategory: ""
+        description: A SigNoz notification channel (Slack, webhook, PagerDuty, email, OpsGenie, MS Teams). Write operations require an admin Service Account token. The receiver config goes in data as JSON.
+        name: signoz_notification_channel
+        title: signoz_notification_channel Resource - signoz
+        examples:
+            - name: slack
+              manifest: |-
+                {
+                  "data": "${jsonencode({\n    slack_configs = [{\n      send_resolved = true\n      api_url       = \"https://hooks.slack.com/services/T000/B000/XXXX\"\n      channel       = \"#alerts\"\n    }]\n  })}",
+                  "name": "team-alerts"
+                }
+        argumentDocs:
+            data: (String) Receiver configuration as JSON, e.g. {"slack_configs":[{"api_url":"…","channel":"#alerts"}]}. Compared semantically.
+            id: (String) Server-assigned channel id.
+            name: (String) Unique channel name.
+        importStatements: []
+    signoz_saved_view:
+        subCategory: ""
+        description: A saved SigNoz explorer view (logs or traces). The query state goes in data as JSON.
+        name: signoz_saved_view
+        title: signoz_saved_view Resource - signoz
+        examples:
+            - name: errors
+              manifest: |-
+                {
+                  "data": "${jsonencode({\n    compositeQuery = {\n      queryType = \"builder\"\n      panelType = \"list\"\n      builderQueries = {\n        A = {\n          dataSource        = \"logs\"\n          queryName         = \"A\"\n          aggregateOperator = \"noop\"\n          expression        = \"A\"\n          disabled          = false\n        }\n      }\n    }\n  })}",
+                  "name": "Errors (last 15m)",
+                  "source_page": "logs"
+                }
+        argumentDocs:
+            data: (String) Saved query state as JSON (compositeQuery, filters, columns, …). Compared semantically.
+            id: (String) Server-assigned view id.
+            name: (String) View name.
+            source_page: '(String) Explorer the view belongs to: logs or traces.'
         importStatements: []

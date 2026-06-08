@@ -1,0 +1,19 @@
+apiVersion: signoz.signoz.m.crossplane.io/v1alpha1
+kind: Dashboard
+metadata:
+  annotations:
+    meta.upbound.io/example-id: signoz/v1alpha1/dashboard
+  labels:
+    testing.upbound.io/example-name: overview
+  name: overview
+  namespace: crossplane-system
+spec:
+  forProvider:
+    data: |-
+      ${jsonencode({
+          title       = "App Overview"
+          description = "Managed by Terraform"
+          tags        = ["managed-by:terraform"]
+          layout      = []
+          widgets     = []
+        })}

@@ -1,0 +1,20 @@
+apiVersion: notification.signoz.m.crossplane.io/v1alpha1
+kind: Channel
+metadata:
+  annotations:
+    meta.upbound.io/example-id: notification/v1alpha1/channel
+  labels:
+    testing.upbound.io/example-name: slack
+  name: slack
+  namespace: crossplane-system
+spec:
+  forProvider:
+    data: |-
+      ${jsonencode({
+          slack_configs = [{
+            send_resolved = true
+            api_url       = "https://hooks.slack.com/services/T000/B000/XXXX"
+            channel       = "#alerts"
+          }]
+        })}
+    name: team-alerts
