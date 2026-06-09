@@ -1,0 +1,18 @@
+# Logs-based alert (v5/v2alpha1). Channel names in thresholds must already exist.
+apiVersion: signoz.signoz.crossplane.io/v1alpha1
+kind: Alert
+metadata:
+  name: high-error-logs
+spec:
+  forProvider:
+    alert: High error log volume
+    alertType: LOGS_BASED_ALERT
+    severity: warning
+    condition: |
+      {"compositeQuery":{"queryType":"builder","panelType":"graph","queries":[{"type":"builder_query","spec":{"name":"A","signal":"logs","stepInterval":60,"aggregations":[{"expression":"count()"}],"filter":{"expression":"severity_text = 'ERROR'"}}}]},"selectedQueryName":"A","thresholds":{"kind":"basic","spec":[{"name":"warning","op":"above","matchType":"at_least_once","target":100,"channels":["team-alerts"]}]}}
+    evaluation: |
+      {"kind":"rolling","spec":{"evalWindow":"5m","frequency":"1m"}}
+    preferredChannels:
+      - team-alerts
+  providerConfigRef:
+    name: default

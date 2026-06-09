@@ -1,0 +1,12 @@
+apiVersion: saved.signoz.crossplane.io/v1alpha1
+kind: View
+metadata:
+  name: errors
+spec:
+  forProvider:
+    name: Errors (last 15m)
+    sourcePage: logs
+    data: |
+      {"compositeQuery":{"queryType":"builder","panelType":"list","builderQueries":{"A":{"dataSource":"logs","queryName":"A","aggregateOperator":"noop","expression":"A","disabled":false}}}}
+  providerConfigRef:
+    name: default

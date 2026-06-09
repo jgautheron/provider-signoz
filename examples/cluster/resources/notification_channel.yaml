@@ -1,0 +1,12 @@
+# Notification channels require an admin SigNoz Service Account token.
+apiVersion: notification.signoz.crossplane.io/v1alpha1
+kind: Channel
+metadata:
+  name: team-alerts
+spec:
+  forProvider:
+    name: team-alerts
+    data: |
+      {"webhook_configs":[{"send_resolved":false,"url":"https://example.com/hook"}]}
+  providerConfigRef:
+    name: default

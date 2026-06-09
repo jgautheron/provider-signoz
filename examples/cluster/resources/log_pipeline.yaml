@@ -1,0 +1,11 @@
+# Singleton: at most one per SigNoz instance.
+apiVersion: log.signoz.crossplane.io/v1alpha1
+kind: Pipeline
+metadata:
+  name: main
+spec:
+  forProvider:
+    pipelines: |
+      [{"orderId":1,"name":"drop-health-checks","alias":"drop-health-checks","enabled":true,"filter":{"op":"AND","items":[{"key":{"key":"http.target","dataType":"string","type":"tag"},"op":"=","value":"/healthz"}]},"config":[]}]
+  providerConfigRef:
+    name: default

@@ -1,0 +1,10 @@
+apiVersion: signoz.signoz.crossplane.io/v1alpha1
+kind: Dashboard
+metadata:
+  name: app-overview
+spec:
+  forProvider:
+    data: |
+      {"title":"App Overview","description":"Managed by Crossplane","tags":["managed-by:crossplane"],"layout":[],"widgets":[]}
+  providerConfigRef:
+    name: default
