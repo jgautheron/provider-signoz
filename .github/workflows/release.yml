@@ -29,6 +29,10 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      # Register QEMU binfmt so the linux_arm64 image's RUN steps can execute
+      # under emulation on the amd64 runner (otherwise: exec format error).
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
       - name: Install crossplane + up CLIs
         run: |
           curl -sL https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh | sh
