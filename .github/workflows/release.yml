@@ -1,0 +1,50 @@
+# Publish the provider package to xpkg.upbound.io/jon on a v* tag.
+# Requires repo secret UPBOUND_TOKEN — an Upbound personal access token
+# (Upbound console → Account → API tokens) for the `jon` org.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. v0.1.0). Defaults to the tag.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install crossplane + up CLIs
+        run: |
+          curl -sL https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh | sh
+          sudo mv crossplane /usr/local/bin/
+          curl -sL https://cli.upbound.io | sh
+          sudo mv up /usr/local/bin/
+      - name: Resolve version
+        id: v
+        run: echo "version=${{ github.event.inputs.version || github.ref_name }}" >> "$GITHUB_OUTPUT"
+      - name: Build all platforms
+        run: make build.all PLATFORMS="linux_amd64 linux_arm64" VERSION=${{ steps.v.outputs.version }}
+      - name: Login to Upbound
+        run: up login --token "${{ secrets.UPBOUND_TOKEN }}"
+      - name: Push multi-arch package
+        run: |
+          V=${{ steps.v.outputs.version }}
+          up xpkg push \
+            -f _output/xpkg/linux_amd64/provider-signoz-${V}.xpkg \
+            -f _output/xpkg/linux_arm64/provider-signoz-${V}.xpkg \
+            xpkg.upbound.io/jon/provider-signoz:${V}
