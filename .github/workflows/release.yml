@@ -1,7 +1,6 @@
 # Publish the provider package to xpkg.upbound.io/jon on a v* tag.
-# Requires two repo secrets from an Upbound API token (Upbound console →
-# Account Settings → API Tokens): UPBOUND_ACCESS_ID + UPBOUND_TOKEN — used as
-# the docker registry username + password for xpkg.upbound.io.
+# Requires repo secret UPBOUND_TOKEN — an Upbound personal access / robot token
+# (Upbound console → Account Settings → API Tokens) used by `up login --token`.
 name: Release
 
 on:
@@ -44,10 +43,8 @@ jobs:
         run: echo "version=${{ github.event.inputs.version || github.ref_name }}" >> "$GITHUB_OUTPUT"
       - name: Build all platforms
         run: make build.all PLATFORMS="linux_amd64 linux_arm64" VERSION=${{ steps.v.outputs.version }}
-      - name: Login to xpkg.upbound.io
-        run: |
-          echo "${{ secrets.UPBOUND_TOKEN }}" | docker login xpkg.upbound.io \
-            --username "${{ secrets.UPBOUND_ACCESS_ID }}" --password-stdin
+      - name: Login to Upbound
+        run: up login --token="${{ secrets.UPBOUND_TOKEN }}"
       - name: Push multi-arch package
         run: |
           V=${{ steps.v.outputs.version }}
