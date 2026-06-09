@@ -68,7 +68,7 @@ spec:
 ## Install
 
 ```bash
-crossplane xpkg install provider xpkg.upbound.io/jgautheron/provider-signoz:v0.1.0
+crossplane xpkg install provider xpkg.upbound.io/jon/provider-signoz:v0.1.0
 ```
 
 ## Developing
